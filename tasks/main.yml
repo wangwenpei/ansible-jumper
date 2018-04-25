@@ -1,0 +1,32 @@
+---
+- name: Create jump user
+  user:
+      name: "{{ item.path|replace('.pub','')|lower }}"
+      state: present
+      home: "/home/{{ item.path|replace('.pub','')|lower }}"
+  with_filetree: "{{ pubkey_path }}"
+  when: >
+    item.state == 'file'
+      and '.pub' in item.path
+
+- name: Append public key
+  authorized_key:
+      user: "{{ item.path|replace('.pub','')|lower }}"
+      state: present
+      key: "{{ lookup('file', item.src) }}"
+  with_filetree: "{{ pubkey_path }}"
+  when: >
+    item.state == 'file'
+      and '.pub' in item.path
+
+
+- name: Destory Jump user
+  user:
+      name: "{{ item.path|replace('.pub','')|lower }}"
+      state: absent
+      home: "/home/{{ item.path|replace('.pub','')|lower }}"
+      remove: "{{ purge_user|bool }}"
+  with_filetree: "{{ departing_pubkey_path }}"
+  when: >
+    item.state == 'file'
+    and '.pub' in item.path
